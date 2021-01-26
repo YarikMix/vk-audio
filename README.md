@@ -6,7 +6,7 @@
 ```bash
 pip3 install -r requirements.txt
 ```
-Запускаем программу:
+Запускаем скрипт:
 ```bash
 python ./src/main.py
 ```
