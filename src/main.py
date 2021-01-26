@@ -80,6 +80,9 @@ class VkMusicDownloader():
             )
             try:
                 vk_session.auth()
+            except vk_api.exceptions.Captcha:
+                print("Данные некорректны. Повторите снова")
+                self.auth(new=True)
             except:
                 vk_session = vk_api.VkApi(
                     login=self.login,
@@ -161,7 +164,7 @@ class VkMusicDownloader():
             if not os.path.exists(self.path):
                 os.makedirs(self.path)
 
-            if auth_dialog.lower() == "y":
+            if auth_dialog == "y":
                 auth_dialog = input("Авторизоваться заново? y/n\n> ")
                 if auth_dialog == "y":
                     self.auth(new=True)
@@ -173,12 +176,12 @@ class VkMusicDownloader():
             elif auth_dialog.lower() == 'n':
                 self.auth(new=False)
 
-            target = input("Какие аудиозаписи хотите скачать?\n1: Свои\n2: Чужие\n> ")
-            if target == "1":
+            target = input("Хотите скачать аудиозаписи со своей страницы вк? y/n\n> ")
+            if target == "y":
                 with open("vk_config.v2.json") as vk_config:
                     uid = json.load(vk_config)[self.login]["cookies"][1]["value"]
                 self.download(uid)
-            elif target == "2":
+            elif target == "n":
                 user_id = input("Введите id пользователя:\n> ")
                 self.download(user_id)
             else:
