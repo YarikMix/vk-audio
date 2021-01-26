@@ -81,7 +81,7 @@ class VkMusicDownloader():
             try:
                 vk_session.auth()
             except vk_api.exceptions.Captcha:
-                print("Данные некорректны. Повторите снова")
+                print("Данные некорректны, повторите снова.")
                 self.auth(new=True)
             except:
                 vk_session = vk_api.VkApi(
