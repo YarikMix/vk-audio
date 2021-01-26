@@ -5,7 +5,6 @@
 Скачиваем зависимости:
 ```bash
 pip3 install -r requirements.txt
-./src/main.py
 ```
 Запускаем программу:
 ```bash
