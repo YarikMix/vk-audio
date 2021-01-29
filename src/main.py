@@ -1,30 +1,21 @@
 # -*- coding: utf-8 -*-
-# Импорт библиотек
+import os
+import json
+from time import time
+
 import vk_api
 from vk_api import audio
-import pytz
 import requests
-import datetime
-from time import time
-import os
-import pickle
-import json
 
-
-def get_time():
-    # возвращает время формата ДД.ММ.ГГ ЧЧ:ММ:СС (по МСК)
-    # например, 01.01.01 13:37:00
-    return datetime.datetime.strftime(datetime.datetime.now(pytz.timezone('Europe/Moscow')), "%d.%m.%Y %H:%M:%S")
-
-
-def console_log(text):
-    # вывод текста в консоль со временем
-    print('[{}] {}'.format(get_time(), text[0].upper() + text[1:]))
+from get_last_vk_id import *
 
 
 def get_num_ending(num, cases):
+    """Склоняет существительное,в зависимости от числительного,
+    стоящего перед ним.
+    """
     num = num % 100
-    if 11 <= num <= 19:
+    if num in [11, 19]:
         return cases[2]
     else:
         i = num % 10
@@ -37,8 +28,6 @@ def get_num_ending(num, cases):
 
 
 class VkMusicDownloader():
-    CONFIG_DIR = "config"
-    USERDATA_FILE = f"{CONFIG_DIR}/UserData.datab"  # файл хранит логин, пароль и id
     REQUEST_STATUS_CODE = 200
     path = 'music/'
 
@@ -48,91 +37,63 @@ class VkMusicDownloader():
             remember_device = True
         return code, remember_device
 
-    def save_user_data(self):
-        save_data = [self.login, self.password]
+    def auth(self):
+        """Просим у пользователя логин и пароль от вк,
+        Создаём новую сессию vk api."""
+        self.login = input("Введите логин\n> ")
+        self.password = input("Введите пароль\n> ")
 
-        with open(self.USERDATA_FILE, 'wb') as dataFile:  # записываем данные в файл
-            pickle.dump(save_data, dataFile)
-
-    def auth(self, new=False):
+        vk_session = vk_api.VkApi(
+            login=self.login,
+            password=self.password,
+            auth_handler=self.auth_handler
+        )
         try:
-            if os.path.exists(self.USERDATA_FILE) and new == False:
-                with open(self.USERDATA_FILE, 'rb') as DataFile:
-                    loaded_data = pickle.load(DataFile)
-
-                self.login = loaded_data[0]
-                self.password = loaded_data[1]
-            else:  # если есть, но пользователь выбрал новую авторизацию, то удаляем данных и просим ввести новые
-                if os.path.exists(self.USERDATA_FILE) and new == True:
-                    os.remove(self.USERDATA_FILE)
-
-                self.login = input("Введите логин\n> ")
-                self.password = input("Введите пароль\n> ")
-                self.save_user_data()
-
-            save_data = [self.login, self.password]
-            with open(self.USERDATA_FILE, 'wb') as dataFile:
-                pickle.dump(save_data, dataFile)  # сохраняем введённые данные
-
-            vk_session = vk_api.VkApi(
-                login=self.login,
-                password=self.password
-            )
-            try:
-                vk_session.auth()
-            except vk_api.exceptions.Captcha:
-                print("Данные некорректны, попробуйте снова.")
-                self.auth(new=True)
-            except:
-                vk_session = vk_api.VkApi(
-                    login=self.login,
-                    password=self.password,
-                    auth_handler=self.auth_handler
-                )
-                vk_session.auth()
-            print('Вы успешно авторизовались.')
-            self.vk = vk_session.get_api()
-            self.vk_audio = audio.VkAudio(vk_session)
-        except KeyboardInterrupt:
-            console_log('Вы завершили выполнение программы.')
+            vk_session.auth()
+        except Exception as e:
+            print("Не получилось авторизоваться, попробуйте снова.")
+            self.auth()
+        print('Вы успешно авторизовались.')
+        self.vk = vk_session.get_api()
+        self.vk_audio = audio.VkAudio(vk_session)
 
     def download_audio(self, audio, count=1):
+        """Скачивает все аудиозаписи из переданного объекта audio."""
         for i in audio:
             fileM = "{} - {}.mp3".format(i["artist"], i["title"])
-            # fileM = re.sub("/", "_", fileM)
             try:
                 if os.path.exists(fileM):
-                    console_log("{} Уже скачен: {}".format(count, fileM))
+                    print("{} Уже скачен: {}".format(count, fileM))
                 else:
                     r = requests.get(i["url"])
                     if r.status_code == self.REQUEST_STATUS_CODE:
-                        console_log("{} Скачивание завершено: {}".format(count, fileM))
                         with open(fileM, "wb") as output_file:
                             output_file.write(r.content)
+                            print("{} Скачивание завершено: {}".format(count, fileM))
+                    else:
+                        raise OSError()
             except OSError:
                 if not os.path.exists(fileM):
-                    console_log("{} !!! Не удалось скачать аудиозапись: {}".format(count, fileM))
+                    print("{} !!! Не удалось скачать аудиозапись: {}".format(count, fileM))
 
             count += 1
 
     def download(self, user_id):
-        console_log('Подготовка к скачиванию...')
+        """Получаем аудиозаписи пользователя."""
 
         # В папке music создаем папку с именем пользователя, которого скачиваем.
         info = self.vk.users.get(user_id=user_id)[0]
-        username = "{} {}".format(info['first_name'], info['last_name'])
+        username = info['first_name'] + " " + info['last_name']
         music_path = "{}/{}".format(self.path, username)
+        # Создаём папку с аудиозаписями пользователя, если её не существует.
         if not os.path.exists(music_path):
-            console_log("Создаём папку с аудиозаписями пользователя {} {}".format(
-                info['first_name'],
-                info['last_name']))
+            print(f"Создаём папку с аудиозаписями пользователя {username}")
             os.makedirs(music_path)
 
-        time_start = time()  # сохраняем время начала скачивания
-        os.chdir(music_path)  # меняем текущую директорию
+        print('Подготовка к скачиванию...')
 
         audio = self.vk_audio.get(owner_id=user_id)
-        console_log("Будет скачано: {} {}.".format(
+        print("Будет скачано: {} {}.".format(
             len(audio),
             get_num_ending(len(audio), [
                 "аудиозапись",
@@ -141,13 +102,15 @@ class VkMusicDownloader():
             ])
         ))
 
-        console_log("Скачивание началось...\n")
+        time_start = time()  # сохраняем время начала скачивания
+        os.chdir(music_path)  # меняем текущую директорию
 
-        # скачиваем музыку
-        self.download_audio(audio=audio)
+        print("Скачивание началось...\n")
+
+        self.download_audio(audio=audio) # скачиваем музыку
 
         time_finish = time()
-        console_log("Скачано {} {} за: {} секунд.".format(
+        print("Скачано {} {} за: {} секунд.".format(
             len(audio),
             get_num_ending(len(audio), [
                 "аудиозапись",
@@ -157,41 +120,89 @@ class VkMusicDownloader():
             round(time_finish - time_start, 1)
         ))
 
-    def main(self, auth_dialog="y"):
-        try:
-            if not os.path.exists(self.CONFIG_DIR):
-                os.mkdir(self.CONFIG_DIR)
-            if not os.path.exists(self.path):
-                os.makedirs(self.path)
+        os.chdir("../..")
+        # # Получаем альбомы пользователя
+        # albums = self.vk_audio.get_albums(owner_id=user_id)
+        # albums_dialog = input(
+        #     "Хотите скачать {} {}? y/n\n> ".format(
+        #         len(albums),
+        #         get_num_ending(len(albums), [
+        #             "альбом",
+        #             "альбома",
+        #             "альбомов"
+        #         ])
+        #     )
+        # )
+        # if albums_dialog == "y":
+        #     try:
+        #         for i in albums:
+        #             audio = self.vk_audio.get(owner_id=user_id, album_id=i['id'])
+        #             time_start = time()
 
-            if auth_dialog == "y":
-                auth_dialog = input("Авторизоваться заново? y/n\n> ")
-                if auth_dialog == "y":
-                    self.auth(new=True)
-                elif auth_dialog == "n":
-                    self.auth(new=False)
-                else:
-                    print('Ошибка, неверный ответ.')
-                    self.main()
-            elif auth_dialog.lower() == 'n':
-                self.auth(new=False)
+        #             print("Будет скачено: {} {} из альбома {}".format(
+        #                 len(audio),
+        #                 get_num_ending(len(audio), [
+        #                     "аудиозапись",
+        #                     "аудиозаписи",
+        #                     "аудиозаписей"
+        #                 ]),
+        #                 i["title"]
+        #             ))
 
-            target = input("Хотите скачать аудиозаписи со своей страницы вк? y/n\n> ")
-            if target == "y":
-                with open("vk_config.v2.json") as vk_config:
-                    uid = json.load(vk_config)[self.login]["cookies"][1]["value"]
-                self.download(uid)
-            elif target == "n":
-                user_id = input("Введите id пользователя:\n> ")
+        #             album_path = "{}/{}".format(music_path, i["title"])
+        #             print(album_path)
+        #             if not os.path.exists(album_path):
+        #                 os.makedirs(album_path)
+
+        #             os.chdir(album_path)  # меняем текущюю директорию
+
+        #             # скачиваем музыку
+        #             self.download_audio(audio=audio)
+
+        #             time_finish = time()
+        #             print("Скачано {} {} из альбома {} за: {} сек.".format(
+        #                 len(audio),
+        #                 get_num_ending(len(audio), [
+        #                     "аудиозапись",
+        #                     "аудиозаписи",
+        #                     "аудиозаписей"
+        #                 ]),
+        #                 i["title"],
+        #                 round(time_finish - time_start, 1)
+        #             ))
+
+        #         os.chdir("../../../")
+            # except vk_api.AccessDenied:
+            #     print("Не получилось скачать альбомы пользователя {}".format(username))
+        # elif albums_dialog == "n":
+        #     console_log("Выход из программы.")
+        # else:
+        #     print('Ошибка, неверный ответ.')
+        #     self.main()
+
+    def main(self):
+        # Создаём папку music, если её не существует.
+        if not os.path.exists(self.path):
+            os.makedirs(self.path)
+
+        self.auth() # Авторизация
+
+        target = input("Хотите скачать аудиозаписи со своей страницы вк? y/n\n> ")
+        if target == "y":
+            user_id = self.vk.users.get()[0]["id"]
+            self.download(user_id)
+        elif target == "n":
+            user_id = int(input("Введите id пользователя:\n> "))
+            if user_id in range(1, get_last_vk_id() + 1):
                 self.download(user_id)
             else:
-                print("Ошибка, неверный ответ.")
+                print("Пользователя с таким id не существует.")
                 self.main()
-
-        except KeyboardInterrupt:
-            console_log('Вы завершили выполнение программы.')
+        else:
+            print("Ошибка, неверный ответ.")
+            self.main()
 
 
 if __name__ == '__main__':
     vkMD = VkMusicDownloader()
-    vkMD.main(auth_dialog="y")
+    vkMD.main()
