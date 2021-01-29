@@ -81,104 +81,109 @@ class VkMusicDownloader():
 	def download(self, user_id):
 		"""Получаем аудиозаписи пользователя."""
 
-		# В папке music создаем папку с именем пользователя, которого скачиваем.
 		info = self.vk.users.get(user_id=user_id)[0]
 		username = info['first_name'] + " " + info['last_name']
-		music_path = "{}/{}".format(self.path, username)
-		# Создаём папку с аудиозаписями пользователя, если её не существует.
-		if not os.path.exists(music_path):
-			print(f"Создаём папку с аудиозаписями пользователя {username}")
-			os.makedirs(music_path)
 
-		print('Подготовка к скачиванию...')
+		# Профиль закрыт
+		if info["is_closed"] and not info["can_access_closed"]:
+			print(f"Профиль пользователя {username} закрыт.")
+		else:
+			print('Подготовка к скачиванию...')
+			
+			# В папке music создаем папку с именем пользователя, которого скачиваем.
+			music_path = "{}/{}".format(self.path, username)
+			# Создаём папку с аудиозаписями пользователя, если её не существует.
+			if not os.path.exists(music_path):
+				print(f"Создаём папку с аудиозаписями пользователя {username}")
+				os.makedirs(music_path)
 
-		audio = self.vk_audio.get(owner_id=user_id)
-		print("Будет скачано: {} {}.".format(
-			len(audio),
-			get_num_ending(len(audio), [
-				"аудиозапись",
-				"аудиозаписи",
-				"аудиозаписей"
-			])
-		))
+			audio = self.vk_audio.get(owner_id=user_id)
+			print("Будет скачано: {} {}.".format(
+				len(audio),
+				get_num_ending(len(audio), [
+					"аудиозапись",
+					"аудиозаписи",
+					"аудиозаписей"
+				])
+			))
 
-		time_start = time()  # сохраняем время начала скачивания
-		os.chdir(music_path)  # меняем текущую директорию
+			time_start = time()  # сохраняем время начала скачивания
+			os.chdir(music_path)  # меняем текущую директорию
 
-		print("Скачивание началось...\n")
+			print("Скачивание началось...\n")
 
-		self.download_audio(audio=audio) # скачиваем музыку
+			self.download_audio(audio=audio) # скачиваем музыку
 
-		time_finish = time()
-		print("Скачано {} {} за: {} секунд.".format(
-			len(audio),
-			get_num_ending(len(audio), [
-				"аудиозапись",
-				"аудиозаписи",
-				"аудиозаписей"
-			]),
-			round(time_finish - time_start, 1)
-		))
+			time_finish = time()
+			print("Скачано {} {} за: {} секунд.".format(
+				len(audio),
+				get_num_ending(len(audio), [
+					"аудиозапись",
+					"аудиозаписи",
+					"аудиозаписей"
+				]),
+				round(time_finish - time_start, 1)
+			))
 
-		os.chdir("../..")
-		# # Получаем альбомы пользователя
-		# albums = self.vk_audio.get_albums(owner_id=user_id)
-		# albums_dialog = input(
-		#     "Хотите скачать {} {}? y/n\n> ".format(
-		#         len(albums),
-		#         get_num_ending(len(albums), [
-		#             "альбом",
-		#             "альбома",
-		#             "альбомов"
-		#         ])
-		#     )
-		# )
-		# if albums_dialog == "y":
-		#     try:
-		#         for i in albums:
-		#             audio = self.vk_audio.get(owner_id=user_id, album_id=i['id'])
-		#             time_start = time()
+			os.chdir("../..")
+			# # Получаем альбомы пользователя
+			# albums = self.vk_audio.get_albums(owner_id=user_id)
+			# albums_dialog = input(
+			#     "Хотите скачать {} {}? y/n\n> ".format(
+			#         len(albums),
+			#         get_num_ending(len(albums), [
+			#             "альбом",
+			#             "альбома",
+			#             "альбомов"
+			#         ])
+			#     )
+			# )
+			# if albums_dialog == "y":
+			#     try:
+			#         for i in albums:
+			#             audio = self.vk_audio.get(owner_id=user_id, album_id=i['id'])
+			#             time_start = time()
 
-		#             print("Будет скачено: {} {} из альбома {}".format(
-		#                 len(audio),
-		#                 get_num_ending(len(audio), [
-		#                     "аудиозапись",
-		#                     "аудиозаписи",
-		#                     "аудиозаписей"
-		#                 ]),
-		#                 i["title"]
-		#             ))
+			#             print("Будет скачено: {} {} из альбома {}".format(
+			#                 len(audio),
+			#                 get_num_ending(len(audio), [
+			#                     "аудиозапись",
+			#                     "аудиозаписи",
+			#                     "аудиозаписей"
+			#                 ]),
+			#                 i["title"]
+			#             ))
 
-		#             album_path = "{}/{}".format(music_path, i["title"])
-		#             print(album_path)
-		#             if not os.path.exists(album_path):
-		#                 os.makedirs(album_path)
+			#             album_path = "{}/{}".format(music_path, i["title"])
+			#             print(album_path)
+			#             if not os.path.exists(album_path):
+			#                 os.makedirs(album_path)
 
-		#             os.chdir(album_path)  # меняем текущюю директорию
+			#             os.chdir(album_path)  # меняем текущюю директорию
 
-		#             # скачиваем музыку
-		#             self.download_audio(audio=audio)
+			#             # скачиваем музыку
+			#             self.download_audio(audio=audio)
 
-		#             time_finish = time()
-		#             print("Скачано {} {} из альбома {} за: {} сек.".format(
-		#                 len(audio),
-		#                 get_num_ending(len(audio), [
-		#                     "аудиозапись",
-		#                     "аудиозаписи",
-		#                     "аудиозаписей"
-		#                 ]),
-		#                 i["title"],
-		#                 round(time_finish - time_start, 1)
-		#             ))
+			#             time_finish = time()
+			#             print("Скачано {} {} из альбома {} за: {} сек.".format(
+			#                 len(audio),
+			#                 get_num_ending(len(audio), [
+			#                     "аудиозапись",
+			#                     "аудиозаписи",
+			#                     "аудиозаписей"
+			#                 ]),
+			#                 i["title"],
+			#                 round(time_finish - time_start, 1)
+			#             ))
 
-		#         os.chdir("../../../")
-			# except vk_api.AccessDenied:
-			#     print("Не получилось скачать альбомы пользователя {}".format(username))
-		# elif albums_dialog == "n":
-		#     console_log("Выход из программы.")
-		# else:
-		#     print('Ошибка, неверный ответ.')
-		#     self.main()
+			#         os.chdir("../../../")
+				# except vk_api.AccessDenied:
+				#     print("Не получилось скачать альбомы пользователя {}".format(username))
+			# elif albums_dialog == "n":
+			#     console_log("Выход из программы.")
+			# else:
+			#     print('Ошибка, неверный ответ.')
+			#     self.main()
 
 	def main(self):
 		# Создаём папку music, если её не существует.
