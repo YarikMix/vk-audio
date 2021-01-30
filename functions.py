@@ -40,7 +40,7 @@ def get_num_ending(num, cases):
         i = num % 10
         if i == 1:
             return cases[0]
-        elif i in [2, 3, 4]:
+        elif 2 <= i <= 4: 
             return cases[1]
-        else:
+        else: 
             return cases[2]
