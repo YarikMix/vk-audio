@@ -115,6 +115,7 @@ class VkMusicDownloader():
 			self.download_audio(audio=audio) # скачиваем музыку
 
 			time_finish = time()
+			download_time = round(time_finish - time_start)
 			print("Скачано {} {} за: {} секунд.".format(
 				len(audio),
 				get_num_ending(len(audio), [
@@ -122,7 +123,12 @@ class VkMusicDownloader():
 					"аудиозаписи",
 					"аудиозаписей"
 				]),
-				round(time_finish - time_start, 1)
+				download_time,
+				get_num_ending(download_time, [
+					"секунду",
+					"секунды",
+					"секунд"
+				])
 			))
 
 			os.chdir("../..")
