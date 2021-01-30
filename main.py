@@ -7,24 +7,7 @@ import vk_api
 from vk_api import audio
 import requests
 
-from get_last_vk_id import *
-
-
-def get_num_ending(num, cases):
-	"""Склоняет существительное,в зависимости от числительного,
-	стоящего перед ним.
-	"""
-	num = num % 100
-	if num in [11, 19]:
-		return cases[2]
-	else:
-		i = num % 10
-		if i == 1:
-			return cases[0]
-		elif i in [2, 3, 4]:
-			return cases[1]
-		else:
-			return cases[2]
+from functions import *
 
 
 class VkMusicDownloader():
