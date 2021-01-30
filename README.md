@@ -8,7 +8,7 @@ pip3 install -r requirements.txt
 ```
 Запускаем скрипт:
 ```bash
-python ./src/main.py
+python main.py
 ```
 Вводим свой логин и пароль от аккаунта вконтакте:
 ```bash
