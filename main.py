@@ -65,11 +65,11 @@ class VkMusicDownloader():
 		"""Получаем аудиозаписи пользователя."""
 
 		info = self.vk.users.get(user_id=user_id)[0]
-		username = info['first_name'] + " " + info['last_name']
+		username = decline(info['first_name'], info['last_name'])
 
 		# Профиль закрыт
 		if info["is_closed"] and not info["can_access_closed"]:
-			print(f"Профиль пользователя {username} закрыт.")
+			print(f"Профиль {username} закрыт.")
 		else:
 			print('Подготовка к скачиванию...')
 			

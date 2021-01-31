@@ -1,5 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
+from pytrovich.enums import NamePart, Gender, Case
+from pytrovich.maker import PetrovichDeclinationMaker
 
 def get_next_url(url):
     response = requests.get(url)
@@ -34,13 +36,21 @@ def get_num_ending(num, cases):
     стоящего перед ним.
     """
     num = num % 100
-    if num in [11, 19]:
+    if 11 <= num <= 19:
         return cases[2]
     else:
         i = num % 10
         if i == 1:
             return cases[0]
-        elif 2 <= i <= 4: 
+        elif 2 <= i <= 4:
             return cases[1]
-        else: 
+        else:
             return cases[2]
+
+
+maker = PetrovichDeclinationMaker()
+
+def decline(first_name, last_name):
+    first_name = maker.make(NamePart.FIRSTNAME, Gender.MALE, Case.GENITIVE, first_name)
+    last_name = maker.make(NamePart.LASTNAME, Gender.MALE, Case.GENITIVE, last_name)
+    return first_name + " " + last_name
