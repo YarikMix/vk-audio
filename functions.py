@@ -31,26 +31,33 @@ def get_last_vk_id():
                 return "Error"
 
 
-def get_num_ending(num, cases):
+def get_num_ending(n, cases):
     """Склоняет существительное,в зависимости от числительного,
     стоящего перед ним.
     """
-    num = num % 100
-    if 11 <= num <= 19:
-        return cases[2]
+    if n % 10 == 1 and n % 100 != 11:
+        return cases[0]
+    elif 2 <= n % 10 <= 4 and (n % 100 < 10 or n % 100 >= 20):
+        return cases[1]
     else:
-        i = num % 10
-        if i == 1:
-            return cases[0]
-        elif 2 <= i <= 4:
-            return cases[1]
-        else:
-            return cases[2]
+        return cases[2]
+
+
+def download_time(seconds):
+    """Возвращает время в правильном падеже."""
+    seconds_decline = get_num_ending(seconds, [
+        "секунду",
+        "секунды",
+        "секунд"
+        ])
+    return f"{seconds} {seconds_decline}"
 
 
 maker = PetrovichDeclinationMaker()
 
-def decline(first_name, last_name):
+def decline(username):
+    """Возвращает имя и фамилию в родительном падаже."""
+    first_name, last_name = username.split(" ")
     first_name = maker.make(NamePart.FIRSTNAME, Gender.MALE, Case.GENITIVE, first_name)
     last_name = maker.make(NamePart.LASTNAME, Gender.MALE, Case.GENITIVE, last_name)
     return first_name + " " + last_name

@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
-import os
-import json
-from time import time
+import time
+from pathlib import Path
 
 import vk_api
 from vk_api import audio
@@ -9,10 +8,20 @@ import requests
 
 from functions import *
 
+BASE_DIR = Path(__file__).resolve().parent
+PATH = BASE_DIR.joinpath("music")
+REQUEST_STATUS_CODE = 200
+
+HEADERS = {
+	"user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.104 Safari/537.36"
+}
 
 class VkMusicDownloader():
-	REQUEST_STATUS_CODE = 200
-	path = 'music/'
+	def __init__(self):
+		self.BASE_DIR = BASE_DIR
+		self.PATH = PATH
+		self.REQUEST_STATUS_CODE = REQUEST_STATUS_CODE
+		self.HEADERS = HEADERS
 
 	def auth_handler(self, remember_device=None):
 		code = input("Введите код подтверждения\n> ")
@@ -43,21 +52,22 @@ class VkMusicDownloader():
 	def download_audio(self, audio, count=1):
 		"""Скачивает все аудиозаписи из переданного объекта audio."""
 		for i in audio:
-			fileM = "{} - {}.mp3".format(i["artist"], i["title"])
+			title = "{} - {}".format(i["artist"], i["title"])
+			file_path = self.music_path.joinpath(title + ".mp3")
 			try:
-				if os.path.exists(fileM):
-					print("{} Уже скачен: {}".format(count, fileM))
+				if file_path.exists():
+					print("{} Уже скачен: {}".format(count, title))
 				else:
-					r = requests.get(i["url"])
+					r = requests.get(i["url"], headers=self.HEADERS)
 					if r.status_code == self.REQUEST_STATUS_CODE:
-						with open(fileM, "wb") as output_file:
+						with open(file_path, mode="wb") as output_file:
 							output_file.write(r.content)
-							print("{} Скачивание завершено: {}".format(count, fileM))
+							print("{} Скачивание завершено: {}".format(count, title))
 					else:
 						raise OSError()
 			except OSError:
-				if not os.path.exists(fileM):
-					print("{} !!! Не удалось скачать аудиозапись: {}".format(count, fileM))
+				if file_path.exists():
+					print("{} !!! Не удалось скачать аудиозапись: {}".format(count, title))
 
 			count += 1
 
@@ -65,23 +75,22 @@ class VkMusicDownloader():
 		"""Получаем аудиозаписи пользователя."""
 
 		info = self.vk.users.get(user_id=user_id)[0]
-		username = decline(info['first_name'], info['last_name'])
+		username = info['first_name'] + " " + info['last_name']
 
 		# Профиль закрыт
 		if info["is_closed"] and not info["can_access_closed"]:
-			print(f"Профиль {username} закрыт.")
+			print(f"Профиль {decline(username)} закрыт")
 		else:
 			print('Подготовка к скачиванию...')
 			
-			# В папке music создаем папку с именем пользователя, которого скачиваем.
-			music_path = "{}/{}".format(self.path, username)
+			self.music_path = self.PATH.joinpath(username)
 			# Создаём папку с аудиозаписями пользователя, если её не существует.
-			if not os.path.exists(music_path):
-				print(f"Создаём папку с аудиозаписями пользователя {username}")
-				os.makedirs(music_path)
+			if not self.music_path.exists():
+				print(f"Создаём папку с аудиозаписями {decline(username)}")
+				self.music_path.mkdir(parents=True, exist_ok=True)
 
 			audio = self.vk_audio.get(owner_id=user_id)
-			print("Будет скачано: {} {}.".format(
+			print("Будет скачано: {} {}".format(
 				len(audio),
 				get_num_ending(len(audio), [
 					"аудиозапись",
@@ -90,31 +99,23 @@ class VkMusicDownloader():
 				])
 			))
 
-			time_start = time()  # сохраняем время начала скачивания
-			os.chdir(music_path)  # меняем текущую директорию
+			time_start = time.time()  # сохраняем время начала скачивания
 
 			print("Скачивание началось...\n")
 
 			self.download_audio(audio=audio) # скачиваем музыку
 
-			time_finish = time()
-			download_time = round(time_finish - time_start)
-			print("Скачано {} {} за: {} секунд.".format(
+			time_finish = time.time()  # сохраняем время конца скачивания
+			print("Скачано {} {} за: {}".format(
 				len(audio),
 				get_num_ending(len(audio), [
 					"аудиозапись",
 					"аудиозаписи",
 					"аудиозаписей"
 				]),
-				download_time,
-				get_num_ending(download_time, [
-					"секунду",
-					"секунды",
-					"секунд"
-				])
+				download_time(round(time_finish - time_start))
 			))
 
-			os.chdir("../..")
 			# # Получаем альбомы пользователя
 			# albums = self.vk_audio.get_albums(owner_id=user_id)
 			# albums_dialog = input(
@@ -176,8 +177,8 @@ class VkMusicDownloader():
 
 	def main(self):
 		# Создаём папку music, если её не существует.
-		if not os.path.exists(self.path):
-			os.makedirs(self.path)
+		if not self.PATH.exists():
+			self.PATH.mkdir()
 
 		self.auth() # Авторизация
 
@@ -190,10 +191,10 @@ class VkMusicDownloader():
 			if user_id in range(1, get_last_vk_id() + 1):
 				self.download(user_id)
 			else:
-				print("Пользователя с таким id не существует.")
+				print("Пользователя с таким id не существует")
 				self.main()
 		else:
-			print("Ошибка, неверный ответ.")
+			print("Ошибка, неверный ответ")
 			self.main()
 
 
