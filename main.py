@@ -8,20 +8,15 @@ import requests
 
 from functions import *
 
-BASE_DIR = Path(__file__).resolve().parent
-PATH = BASE_DIR.joinpath("music")
-REQUEST_STATUS_CODE = 200
-
-HEADERS = {
-	"user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.104 Safari/537.36"
-}
 
 class VkMusicDownloader():
 	def __init__(self):
-		self.BASE_DIR = BASE_DIR
-		self.PATH = PATH
-		self.REQUEST_STATUS_CODE = REQUEST_STATUS_CODE
-		self.HEADERS = HEADERS
+		self.BASE_DIR = Path(__file__).resolve().parent
+		self.PATH = BASE_DIR.joinpath("music")
+		self.REQUEST_STATUS_CODE = 200
+		self.HEADERS = {
+			"user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.104 Safari/537.36"
+		}
 
 	def auth_handler(self, remember_device=None):
 		code = input("Введите код подтверждения\n> ")
