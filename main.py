@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import time
 from pathlib import Path
+from pytils import numeral
 
 import vk_api
 from vk_api import audio
@@ -85,13 +86,8 @@ class VkMusicDownloader():
 				self.music_path.mkdir(parents=True, exist_ok=True)
 
 			audio = self.vk_audio.get(owner_id=user_id)
-			print("Будет скачано: {} {}".format(
-				len(audio),
-				get_num_ending(len(audio), [
-					"аудиозапись",
-					"аудиозаписи",
-					"аудиозаписей"
-				])
+			print("Будет скачано: {}".format(
+				numeral.get_plural(len(audio), "аудиозапись, аудиозаписи, аудиозаписей")
 			))
 
 			time_start = time.time()  # сохраняем время начала скачивания
@@ -101,14 +97,11 @@ class VkMusicDownloader():
 			self.download_audio(audio=audio) # скачиваем музыку
 
 			time_finish = time.time()  # сохраняем время конца скачивания
-			print("Скачано {} {} за: {}".format(
-				len(audio),
-				get_num_ending(len(audio), [
-					"аудиозапись",
-					"аудиозаписи",
-					"аудиозаписей"
-				]),
-				download_time(round(time_finish - time_start))
+			download_time = round(time_finish - time_start)
+
+			print("Скачано {} за: {}".format(
+				numeral.get_plural(len(audio), "аудиозапись, аудиозаписи, аудиозаписей"),
+				numeral.get_plural(download_time, "секунду, секунды, секунд")
 			))
 
 			# # Получаем альбомы пользователя

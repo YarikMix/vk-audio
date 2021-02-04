@@ -31,28 +31,6 @@ def get_last_vk_id():
                 return "Error"
 
 
-def get_num_ending(n, cases):
-    """Склоняет существительное,в зависимости от числительного,
-    стоящего перед ним.
-    """
-    if n % 10 == 1 and n % 100 != 11:
-        return cases[0]
-    elif 2 <= n % 10 <= 4 and (n % 100 < 10 or n % 100 >= 20):
-        return cases[1]
-    else:
-        return cases[2]
-
-
-def download_time(seconds):
-    """Возвращает время в правильном падеже."""
-    seconds_decline = get_num_ending(seconds, [
-        "секунду",
-        "секунды",
-        "секунд"
-        ])
-    return f"{seconds} {seconds_decline}"
-
-
 maker = PetrovichDeclinationMaker()
 
 def decline(username):
