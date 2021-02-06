@@ -13,7 +13,7 @@ from functions import *
 class VkMusicDownloader():
 	def __init__(self):
 		self.BASE_DIR = Path(__file__).resolve().parent
-		self.PATH = BASE_DIR.joinpath("music")
+		self.PATH = self.BASE_DIR.joinpath("music")
 		self.REQUEST_STATUS_CODE = 200
 		self.HEADERS = {
 			"user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.104 Safari/537.36"
