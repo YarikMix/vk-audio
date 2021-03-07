@@ -36,4 +36,3 @@ python vk-audio/main.py
 Выберите номер альбома, который хотите скачать. **Если хотите скачать все альбомы, то введите 0**<br><br>
 ![](https://github.com/YarikMix/vk-audio/raw/main/images/3.png)<br><br>
 Готово, вы великолепны!<br><br>
-![](https://github.com/YarikMix/vk-audio/raw/main/images/3.png)
