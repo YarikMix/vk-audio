@@ -23,11 +23,11 @@ python vk-audio/main.py
 Введите id профиля
 > id
 ```
-Аудиозаписи пользователя начнут скачиваться в папку music:<br>
-![](https://github.com/YarikMix/vk-audio/raw/main/images/1.png)<br>
-После того, как все аудиозаписи скачаются, выведется список альбомов пользователя.<br>
-![](https://github.com/YarikMix/vk-audio/raw/main/images/2.png)<br>
-Выберите номер альбома, который хотите скачать. **Если хотите скачать все альбомы, то введите 0**<br>
-![](https://github.com/YarikMix/vk-audio/raw/main/images/3.png)<br>
-Готово, вы великолепны!<br>
+Аудиозаписи пользователя начнут скачиваться в папку music:<br><br>
+![](https://github.com/YarikMix/vk-audio/raw/main/images/1.png)<br><br>
+После того, как все аудиозаписи скачаются, выведется список альбомов пользователя.<br><br>
+![](https://github.com/YarikMix/vk-audio/raw/main/images/2.png)<br><br>
+Выберите номер альбома, который хотите скачать. **Если хотите скачать все альбомы, то введите 0**<br><br>
+![](https://github.com/YarikMix/vk-audio/raw/main/images/3.png)<br><br>
+Готово, вы великолепны!<br><br>
 ![](https://github.com/YarikMix/vk-audio/raw/main/images/3.png)
