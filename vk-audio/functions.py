@@ -1,10 +1,5 @@
-import json
 from pytrovich.enums import NamePart, Gender, Case
 from pytrovich.maker import PetrovichDeclinationMaker
-
-def write_json(data):
-    with open("datas.json", "w", encoding="utf-8") as file:
-        json.dump(data, file, indent=2, ensure_ascii=False)
 
 maker = PetrovichDeclinationMaker()
 
