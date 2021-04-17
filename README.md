@@ -32,10 +32,9 @@ python vk-audio/main.py
 
 Узнать id человека или группы ВКонтакте можно [тут](https://regvk.com/id/)
 
-Аудиозаписи пользователя начнут скачиваться в папку music:<br><br>
-![](https://github.com/YarikMix/vk-audio/raw/main/images/1.png)<br><br>
-После того, как все аудиозаписи скачаются, выведется список альбомов пользователя.<br><br>
-![](https://github.com/YarikMix/vk-audio/raw/main/images/2.png)<br><br>
-Выберите номер альбома, который хотите скачать. **Если хотите скачать все альбомы, то введите 0**<br><br>
-![](https://github.com/YarikMix/vk-audio/raw/main/images/3.png)<br><br>
-Готово, вы великолепны!<br><br>
+Выбираем аудиозаписи пользователя, или альбомы
+```bash
+1.Скачать аудиозаписи
+2.Скачать альбомы
+>
+```
