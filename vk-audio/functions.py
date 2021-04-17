@@ -1,6 +1,7 @@
 from pytrovich.enums import NamePart, Gender, Case
 from pytrovich.maker import PetrovichDeclinationMaker
 
+
 maker = PetrovichDeclinationMaker()
 
 def decline(first_name, last_name, sex):
