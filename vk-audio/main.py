@@ -3,14 +3,13 @@ import time
 import logging
 import re
 from pathlib import Path
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
+import requests
 import yaml
-import aiohttp
-import aiofiles
-import asyncio
 import vk_api
 from vk_api import audio
-from tqdm.asyncio import tqdm
+from tqdm import tqdm
 from pytils import numeral
 
 from functions import decline
@@ -68,7 +67,7 @@ def check_id(id: str) -> bool:
 
 
 class VkUserAlbumsDownloader:
-    async def download_album(self, album: dict):
+    def download_album(self, album: dict):
         """Скачивает все аудиозаписи из переданного альбома"""
         album_title = re.sub(r'[\\/:*?"<>|]', " ", album["title"])
         album_path = self.user_albums_path.joinpath(album_title)
@@ -96,7 +95,7 @@ class VkUserAlbumsDownloader:
         logging.info("Скачивание началось...")
 
         time_start = time.time()
-        await audio_downloader.download_audios(audios=audios, audio_dir=album_path)
+        audio_downloader.download_audios(audios=audios, audio_dir=album_path)
 
         time_finish = time.time()
         download_time = round(time_finish - time_start)
@@ -107,7 +106,7 @@ class VkUserAlbumsDownloader:
             numeral.get_plural(download_time, "секунду, секунды, секунд")
         ))
 
-    async def main(self):
+    def main(self):
         try:
             self.user_albums_path = user_audio_path.joinpath("Альбомы")
 
@@ -136,7 +135,7 @@ class VkUserAlbumsDownloader:
                     time_start = time.time()
 
                     for album in albums:
-                        await self.download_album(album)
+                        self.download_album(album)
 
                     time_finish = time.time()
                     download_time = math.ceil(time_finish - time_start)
@@ -147,9 +146,11 @@ class VkUserAlbumsDownloader:
                     ))
 
                 else:
-                    await self.download_album(albums[int(album_number) - 1])
+                    self.download_album(albums[int(album_number) - 1])
+
             except Exception as e:
                 logging.info("Альбома с таким номером нет")
+
         except vk_api.exceptions.AccessDenied:
             logging.info(f"Альбомы {decline_username} скрыты :(")
 
@@ -158,36 +159,34 @@ class VkUserAlbumsDownloader:
 
 
 class VkUserAudioDownloader:
-    async def download_audio(self, session: aiohttp.ClientSession, audio_url: str, audio_path: Path):
-        if audio_path.exists():
-            pass
-        else:
+    def download_audio(self, audio: dict, audio_dir: Path):
+        """Скачивает переданную аудиозапись"""
+        artist = re.sub(r'[\\/:*?"<>|]', " ", audio["artist"])
+        title = re.sub(r'[\\/:*?"<>|]', " ", audio["title"])
+        audio_title = "{} - {}.mp3".format(artist, title)
+        audio_path = audio_dir.joinpath(audio_title)
+
+        if not audio_path.exists():
             try:
-                async with session.get(audio_url) as response:
-                    if response.status == 200:
-                        async with aiofiles.open(audio_path, "wb") as f:
-                            await f.write(await response.read())
-                            await f.close()
-                    else:
-                        logging.info(audio_url)
+                response = requests.get(audio["url"])
+                if response.status_code == 200:
+                    with open(str(audio_path), "wb") as f:
+                        f.write(response.content)
+                else:
+                    logging.info(response.status_code)
             except Exception as e:
-                pass
+                logging.info(e)
 
-    async def download_audios(self, audios: list, audio_dir):
+    def download_audios(self, audios: list, audio_dir: Path):
         """Скачивает все аудиозаписи из переданного списка"""
-        async with aiohttp.ClientSession() as session:
-            futures = []
-            for audio in audios:
-                artist = re.sub(r'[\\/:*?"<>|]', " ", audio["artist"])
-                title = re.sub(r'[\\/:*?"<>|]', " ", audio["title"])
-                audio_title = "{} - {}.mp3".format(artist, title)
-                audio_path = audio_dir.joinpath(audio_title)
-                futures.append(self.download_audio(session, audio["url"], audio_path))
+        with tqdm(total=len(audios)) as pbar:
+            with ThreadPoolExecutor(max_workers=len(audios)) as executor:
+                futures = [executor.submit(self.download_audio, audio, audio_dir) for audio in audios]
+                for future in as_completed(futures):
+                    result = future.result()
+                    pbar.update(1)
 
-            for future in tqdm(asyncio.as_completed(futures), total=len(futures)):
-                await future
-
-    async def main(self):
+    def main(self):
         try:
             logging.info("Получаем аудиозаписи...")
 
@@ -204,7 +203,7 @@ class VkUserAudioDownloader:
 
             time_start = time.time()
 
-            await self.download_audios(audios=audios, audio_dir=user_audio_path)
+            self.download_audios(audios=audios, audio_dir=user_audio_path)
 
             time_finish = time.time()
             download_time = math.ceil(time_finish - time_start)
@@ -233,7 +232,6 @@ if __name__ == '__main__':
     if check_id(user_id):
         audio_downloader = VkUserAudioDownloader()
         albums_downloader = VkUserAlbumsDownloader()
-        loop = asyncio.get_event_loop()
 
         # Получаем информацию о пользователе
         user_info = vk.users.get(
@@ -267,9 +265,9 @@ if __name__ == '__main__':
 
                 prompt = input("1.Скачать аудиозаписи \n2.Скачать альбомы\n> ")
                 if prompt == "1":
-                    loop.run_until_complete(audio_downloader.main())
+                    audio_downloader.main()
                 elif prompt == "2":
-                    loop.run_until_complete(albums_downloader.main())
+                    albums_downloader.main()
                 else:
                     logging.info("Выход из программы")
     else:
