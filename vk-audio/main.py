@@ -168,11 +168,13 @@ class VkUserAudioDownloader:
                         async with aiofiles.open(audio_path, "wb") as f:
                             await f.write(await response.read())
                             await f.close()
+                    else:
+                        logging.info(audio_url)
             except Exception as e:
                 pass
 
     async def download_audios(self, audios: list, audio_dir):
-        """Скачивает все фото из переданного списка"""
+        """Скачивает все аудиозаписи из переданного списка"""
         async with aiohttp.ClientSession() as session:
             futures = []
             for audio in audios:
