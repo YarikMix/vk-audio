@@ -168,19 +168,18 @@ class VkUserAudioDownloader:
 
         if not audio_path.exists():
             try:
-                response = requests.get(audio["url"])
+                response = requests.get(audio["url"], stream=True)
                 if response.status_code == 200:
                     with open(str(audio_path), "wb") as f:
-                        f.write(response.content)
-                else:
-                    logging.info(response.status_code)
+                        for chunk in response.iter_content(chunk_size=1024):
+                            f.write(chunk)
             except Exception as e:
-                logging.info(e)
+                pass
 
     def download_audios(self, audios: list, audio_dir: Path):
         """Скачивает все аудиозаписи из переданного списка"""
         with tqdm(total=len(audios)) as pbar:
-            with ThreadPoolExecutor(max_workers=len(audios)) as executor:
+            with ThreadPoolExecutor(max_workers=3) as executor:
                 futures = [executor.submit(self.download_audio, audio, audio_dir) for audio in audios]
                 for future in as_completed(futures):
                     result = future.result()

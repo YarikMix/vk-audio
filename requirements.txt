@@ -1,6 +1,6 @@
-pytils==0.3
-tqdm==4.56.0
-requests==2.25.1
 vk_api==11.9.1
+requests==2.25.1
+tqdm==4.56.0
+pytils==0.3
 pytrovich==0.0.2
 PyYAML==5.4.1
