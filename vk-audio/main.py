@@ -2,6 +2,7 @@ import math
 import time
 import logging
 import re
+import psutil
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
@@ -179,7 +180,7 @@ class VkUserAudioDownloader:
     def download_audios(self, audios: list, audio_dir: Path):
         """Скачивает все аудиозаписи из переданного списка"""
         with tqdm(total=len(audios)) as pbar:
-            with ThreadPoolExecutor(max_workers=3) as executor:
+            with ThreadPoolExecutor(max_workers=psutil.cpu_count()) as executor:
                 futures = [executor.submit(self.download_audio, audio, audio_dir) for audio in audios]
                 for future in as_completed(futures):
                     result = future.result()
